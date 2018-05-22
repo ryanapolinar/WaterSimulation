@@ -1,0 +1,10 @@
+* http://www.webglacademy.com/courses.php?courses=21_32#21 (shallow water tutorial)
+* http://madebyevan.com/webgl-water/ (water in 3 dimensions)
+	* Source code: https://github.com/evanw/webgl-water
+* https://paveldogreat.github.io/WebGL-Fluid-Simulation/ (shallow water)
+* https://en.wikipedia.org/wiki/Shallow_water_equations
+* http://kiwi.atmos.colostate.edu/group/dave/pdf/ShallowWater.pdf
+* https://books.google.com/books?id=Z9eYCgAAQBAJ&printsec=frontcover&source=gbs_atb#v=onepage&q&f=false 
+	* computation graphics book with shallow water equations, page 175
+
+
