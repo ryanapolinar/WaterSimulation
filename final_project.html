@@ -4,6 +4,64 @@
   <head>
     <meta charset='utf-8'/>
     <script type="text/javascript" src="final_project.js"></script>
+
+    <!-- RENDERING SHADERS -->
+    <script id="vert-shader-render" type="x-shader/x-vertex">
+      attribute vec2 position;
+
+      varying vec2 vUV;
+
+      void main(void) {
+        gl_Position = vec4(position, 0.0, 1.0);
+        vUV = 0.5 * (position + vec2(1.0, 1.0));
+      }
+    </script>
+
+    <script id="frag-shader-render" type="x-shader/x-fragment">
+      precision highp float;
+      uniform sampler2D sampler;
+
+      varying vec2 vUV;
+
+      void main(void) {
+        vec4 textureColor = texture2D(sampler, vUV);
+        gl_FragColor = textureColor;
+      }
+    </script>
+
+    <!-- SHALLOW WATER SHADERS -->
+
+    <script id="frag-shader-water" type="x-shader/x-fragment">
+      precision highp float;
+
+      uniform float dt, H, b, g, epsilon;
+      uniform float scale;
+      uniform sampler2D sampler_water, sampler_normals;
+
+      varying vec2 vUV;
+
+      void main(void) {
+
+        vec4 water_texture = texture2D(sampler_water, vUV);
+        float h = water_texture.r;
+        vec2 uvSpeed = water_texture.gb;
+
+        vec2 dx=vec2(epsilon, 0.0);
+        vec2 dy=vec2(0.0, epsilon);
+        float du_dx=(texture2D(sampler_water, vUV+dx).g-texture2D(sampler_water, vUV-dx).g)/(2.*scale);
+        float dv_dy=(texture2D(sampler_water, vUV+dy).b-texture2D(sampler_water, vUV-dy).b)/(2.*scale);
+
+        vec3 normals=texture2D(sampler_normals,vUV).xyz;
+
+        //we add 1 to Nz because RGB = (0,0,0) -> Normal = (0,0,1)
+        vec2 d_uvSpeed = -dt * (g * normals.xy/(normals.z+1.) + b*uvSpeed);
+
+        float d_h = -dt * H * (du_dx + dv_dy);
+
+        gl_FragColor = vec4(h+d_h, uvSpeed+d_uvSpeed, 1.);
+      }
+    </script>
+
   </head>
   <body style='margin:0px; background-color: black;' onload='main()'>
     <canvas id='canvas'
