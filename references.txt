@@ -6,5 +6,5 @@
 * http://kiwi.atmos.colostate.edu/group/dave/pdf/ShallowWater.pdf
 * https://books.google.com/books?id=Z9eYCgAAQBAJ&printsec=frontcover&source=gbs_atb#v=onepage&q&f=false 
 	* computation graphics book with shallow water equations, page 175
-
+* https://www.ibiblio.org/e-notes/webgl/waves/wave.html
 
