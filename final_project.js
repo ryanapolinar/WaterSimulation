@@ -4,7 +4,7 @@ var main = function() {
 
     CANVAS.width = window.innerWidth;
     CANVAS.height = window.innerHeight;
-    var GL = CANVAS.getContext("webgl", {antialias: false, alpha: false});
+    var GL = CANVAS.getContext("webgl");
 
     function loadShaderFromDOM(id) {
       var shaderScript = document.getElementById(id);
@@ -69,24 +69,24 @@ var main = function() {
     /* ----- THE QUAD ----- */
     // POINTS :
     var quad_vertex = [
-      -1,-1, // bottom left
-      1,-1,  // bottom right
-      1,1,   // top right
-      -1,1   // top left
+      -1,-1,  // bottom left
+       1,-1,  // bottom right
+       1, 1,  // top right
+      -1, 1,  // top left
     ];
 
-    var QUAD_VERTEX= GL.createBuffer ();
+    var QUAD_VERTEX= GL.createBuffer();
     GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
     GL.bufferData(GL.ARRAY_BUFFER,new Float32Array(quad_vertex),GL.STATIC_DRAW);
 
     //FACES:
     var quad_faces = [
       0,1,2,
-      0,2,3
+      0,2,3,
     ];
     var QUAD_FACES= GL.createBuffer ();
     GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
-    GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array([0,1,2, 0,2,3]),GL.STATIC_DRAW);
+    GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(quad_faces),GL.STATIC_DRAW);
 
 
     /* ----- THE TEXTURE ----- */
@@ -97,7 +97,12 @@ var main = function() {
 
     var renderingTexture = GL.createTexture();
     GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+
+
     GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
+    // Blue placeholder color
+    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, 1, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE,
+                  new Uint8Array([0, 0, 255, 255]));
 
     renderingImage.onload = function() {
       GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
