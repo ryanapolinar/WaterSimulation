@@ -1,2 +1,2 @@
 # WaterSimulation
-Shallow water simulation by Ryan Apolinar and Jason Tam
+Water simulation by Ryan Apolinar and Jason Tam
