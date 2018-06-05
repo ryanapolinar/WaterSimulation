@@ -11,7 +11,7 @@ var prMatrix, mvMat, mvMatLoc, rotMat, posLocation, sampLoc, samp1Loc;
 function main() {
 	initGL();
 	transl = -1.5;
-	c_w = 1024; //window.innerWidth - 50
+	c_w = 600; //window.innerWidth - 50
 	c_h = 512; //window.innerHeight - 10
 	canvas.width = c_w;  
 	canvas.height = c_h
@@ -170,7 +170,7 @@ function main() {
 	anim();
 
 	canvas.resize = function(){
-		c_w = 1024;//window.innerWidth - 50;
+		c_w = 600;//window.innerWidth - 50;
 		c_h = 512;//window.innerHeight - 10
 		canvas.width = c_w;
 		canvas.height = c_h
