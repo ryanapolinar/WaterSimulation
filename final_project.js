@@ -3,6 +3,7 @@ var prog, prg_show, FBO, FBO1, FBO2, texture, texture1, texture2, c_w, c_h,
     n = 512, n1 = n-1,
     prMatrix, mvMat, mvMatLoc, rotMat, posLocation,
     sampLoc, samp1Loc
+
 function main() {
    initGL()
    transl = -1.5
@@ -144,6 +145,8 @@ function main() {
     drawScene()
   }
 }
+
+
 function draw(){
    gl.viewport(0, 0, n, n)
 
@@ -166,6 +169,8 @@ function draw(){
    drawScene()
    frames++
 }
+
+
 function drawScene(){
    gl.viewport(0, 0, c_w, c_h)
    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
@@ -181,6 +186,8 @@ function drawScene(){
    gl.uniformMatrix4fv( mvMatLoc, false, new Float32Array(mvMatrix.getAsArray()) )
    gl.drawElements(gl.TRIANGLE_STRIP, 2*n1*(n+1) - 2, gl.UNSIGNED_INT, 0)
 }
+
+
 function anim(){
    draw()
    switch ( animation ){
@@ -198,6 +205,8 @@ function anim(){
        break
    }
 }
+
+
 function run(v) {
   if( animation == "animate" ){
     animation = "stop"
@@ -208,6 +217,8 @@ function run(v) {
     anim()
   }
 }
+
+
 function reset() {
   if( animation == "stop" ){
     animation = "reset"
@@ -215,12 +226,16 @@ function reset() {
     anim()}
   else animation = "reset"
 }
+
+
 function fr(){
   var ti = new Date().getTime()
   var fps = Math.round(1000*frames/(ti - time))
   document.getElementById("framerate").value = fps
   frames = 0;  time = ti
 }
+
+
 function setDelay(val) {
   delay = parseInt(val)
 }
