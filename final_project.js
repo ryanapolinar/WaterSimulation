@@ -11,8 +11,8 @@ var prMatrix, mvMat, mvMatLoc, rotMat, posLocation, sampLoc, samp1Loc;
 function main() {
 	initGL();
 	transl = -1.5;
-	c_w = 1024;//window.innerWidth - 50
-	c_h = 512;//window.innerHeight - 10
+	c_w = 1024; //window.innerWidth - 50
+	c_h = 512; //window.innerHeight - 10
 	canvas.width = c_w;  
 	canvas.height = c_h
 	
@@ -53,7 +53,8 @@ function main() {
 	gl.vertexAttribPointer(aPosLoc, 2, gl.FLOAT, gl.FALSE, 0, 0);
 
 	pix = new Float32Array(4*n*n)
-	var p = 0, h = 1/n1
+	var p = 0;
+	var h = 1/n1;
 	for(var i = 0; i < n; i++ ) {
 		for(var j = 0; j < n; j++ ){
 			var x = h*(j-n/2);
@@ -156,7 +157,9 @@ function main() {
 	mvMatrix = new CanvasMatrix4();
 	rotMat = new CanvasMatrix4();
 	rotMat.makeIdentity();
-	rotMat.rotate(-45, 1,0,0);
+	//rotMat.scale(0.8,0.8,1,0)
+	rotMat.rotate(-30, 1,0,0);
+	
 	mvMatLoc = gl.getUniformLocation(prog_show,"mvMatrix");
 
 	gl.enable(gl.DEPTH_TEST);
