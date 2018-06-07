@@ -1,0 +1,14 @@
+body {
+  color: white;
+  background-color: black;
+  display: default;
+  overflow-y: hidden;
+}
+
+#title {
+  font-size: 1.35em;
+}
+
+#authors {
+  font-size: 1em;
+}
