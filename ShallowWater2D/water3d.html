@@ -31,6 +31,16 @@
     	const vec4 dirHalf = vec4(-.4034, .259, .8776, 0.);
 
     	void main(void) {
+        float h = texture2D(sampler_normals, aPos ).r + 0.5;
+    		gl_Position = prMatrix * mvMatrix * vec4(aPos, h, 1.0);
+
+    		vec3 aNorm = texture2D(sampler_normals, aPos).xyz;
+    		vec4 rotNorm = mvMatrix * vec4(aNorm, .0);
+    		float i = max( 0., abs(dot(rotNorm, dirDif)) );
+    		color = vec4(.0, .8*i, i, 1); //Change Color
+    		i = pow( max( 0., abs(dot(rotNorm, dirHalf)) ), 120.);
+    		color += vec4(i, i, i, 1.0);
+        /*
     		float h = texture2D(sampler, aPos ).a + 0.5;
     		gl_Position = prMatrix * mvMatrix * vec4(aPos, h, 1.0);
     		vec3 aNorm = texture2D(sampler_normals, aPos).xyz;
@@ -39,6 +49,7 @@
     		color = vec4(.0, .8*i, i, 1); //Change Color
     		i = pow( max( 0., abs(dot(rotNorm, dirHalf)) ), 120.);
     		color += vec4(i, i, i, 0.);
+        */
     	}
     </script>
 
@@ -47,7 +58,7 @@
 
       varying vec4 color;
       void main(void) {
-        gl_FragColor = color;
+        gl_FragColor = vec4(0.0, 0.0, 0.5, 0.75);
       }
     </script>
 

@@ -15,8 +15,17 @@ var main = function() {
     CANVAS.addEventListener("mousemove", mouseMove, false);
     // Detect if the mouse is in the canvas or not
     SOURCEFLOW=0;
-    CANVAS.addEventListener("mouseout", function() { SOURCEFLOW = 0; } , false);
-    CANVAS.addEventListener("mouseenter", function() { SOURCEFLOW = 4; } , false);
+    CANVAS.addEventListener("mouseout", function() {
+      SOURCEFLOW = 0;
+    } , false);
+    CANVAS.addEventListener("mousedown", function() {
+      SOURCEFLOW = 4;
+      console.log("mousedown");
+    } , false);
+    CANVAS.addEventListener("mouseup", function() {
+      SOURCEFLOW = 0;
+      console.log("mouseup");
+    } , false);
 
 
     // OES TEXTURE FLOAT extension enabled
@@ -31,11 +40,6 @@ var main = function() {
     var GPGPU_NPASS=3; //number of GPGPU pass per rendering
 
     var SHP_VARS = {};
-
-    // Projection matrix
-    var projection = mat4.create();
-    // Model-View matrix
-    var modelview = mat4.create();
 
     /* ----- HELPER FUNCTIONS ----- */
 
@@ -184,11 +188,24 @@ var main = function() {
 
     /* ----- THE QUAD ----- */
     // POINTS :
+
     var quad_vertex = [
+
       -1,-1, // bottom left
       1,-1,  // bottom right
       1,1,   // top right
       -1,1   // top left
+      /*
+      -1, 0, -1,
+      0, 0, -1,
+      1, 0, -1,
+      -1, 0, 0,
+      0, 0, 0,
+      1, 0, 0,
+      -1, 0, 1,
+      0, 0, 1,
+      1, 0, 1,
+      */
     ];
 
     var QUAD_VERTEX= GL.createBuffer ();
@@ -197,12 +214,23 @@ var main = function() {
 
     //FACES:
     var quad_faces = [
+
       0,1,2,
-      0,2,3
+      0,2,3,
+      /*
+      0, 1, 3,
+      1, 4, 3,
+      1, 2, 4,
+      2, 5, 4,
+      3, 4, 6,
+      4, 7, 6,
+      4, 5, 7,
+      5, 8, 7
+      */
     ];
     var QUAD_FACES= GL.createBuffer ();
     GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
-    GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array([0,1,2, 0,2,3]),GL.STATIC_DRAW);
+    GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(quad_faces),GL.STATIC_DRAW);
 
 
     /* ----- THE TEXTURE ----- */
@@ -276,7 +304,6 @@ var main = function() {
     GL.disable(GL.SCISSOR_TEST);
     GL.clearColor(0.0, 0.0, 0.0, 0.0);
 
-
     // SHADER PROGRAM RENDERING INIT
     GL.useProgram(renderShader);
     GL.enableVertexAttribArray(SHP_VARS.rendering.position);
@@ -340,6 +367,7 @@ var main = function() {
       old_timestamp = timestamp;
 
       GL.clear(GL.COLOR_BUFFER_BIT);
+
       for (var i=0; i<GPGPU_NPASS; i++) {
 
         //COPY
@@ -378,10 +406,56 @@ var main = function() {
 
       } // end of GPGPU_NPASS
 
-      // RENDERING :
+
+      // RENDERING
       GL.bindFramebuffer(GL.FRAMEBUFFER, null);
-      GL.useProgram(renderShader);
-      GL.enableVertexAttribArray(SHP_VARS.rendering.position);
+      GL.useProgram(shader3D);
+
+      // Set up the projection matrix (prMatrix)
+      const fieldOfView = 45 * Math.PI / 180;   // in radians
+      const aspect = GL.canvas.clientWidth / GL.canvas.clientHeight;
+      const zNear = 0.1;
+      const zFar = 100.0;
+      const prMatrix = mat4.create();
+      mat4.perspective(prMatrix,
+                       fieldOfView,
+                       aspect,
+                       zNear,
+                       zFar);
+
+      // Set up the modelview matrix (mvMatrix)
+      const mvMatrix = mat4.create();
+      mat4.translate(mvMatrix,     // destination matrix
+                    mvMatrix,     // matrix to translate
+                    [-0.0, -0.5, -4.5]);  // amount to translate
+
+      mat4.rotate(mvMatrix,  // destination matrix
+                 mvMatrix,  // matrix to rotate
+                 -65 * Math.PI / 180,     // amount to rotate in radians
+                 [1, 0, 0]);       // axis to rotate around
+
+      // Pass the projection and modelview matrices to the shaders
+      GL.uniformMatrix4fv(
+         SHP_VARS.three.prMatrix,
+         false,
+         prMatrix);
+      GL.uniformMatrix4fv(
+         SHP_VARS.three.mvMatrix,
+         false,
+         mvMatrix);
+
+      // 3D SHADER PROGRAM RENDERING INIT
+      GL.useProgram(shader3D);
+      GL.enableVertexAttribArray(SHP_VARS.three.aPos);
+      //GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
+      GL.uniform1i(SHP_VARS.three.sampler, 0);
+      GL.uniform1i(SHP_VARS.three.sampler_normals, 1);
+      GL.vertexAttribPointer(SHP_VARS.three.aPos, 2, GL.FLOAT, false,8,0) ;
+      //GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
+      GL.disableVertexAttribArray(SHP_VARS.three.aPos);
+
+
+      GL.enableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
       GL.viewport(0.0, 0.0, CANVAS.width, CANVAS.height);
       GL.activeTexture(GL.TEXTURE1);
       GL.bindTexture(GL.TEXTURE_2D, texture_normals);
@@ -389,7 +463,7 @@ var main = function() {
       GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
       GL.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
       // Disable rendering attributes for next loop
-      GL.disableVertexAttribArray(SHP_VARS.rendering.position);
+      GL.disableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
 
       GL.flush();
       window.requestAnimationFrame(animate);
