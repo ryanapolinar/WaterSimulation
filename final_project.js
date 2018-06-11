@@ -1,10 +1,12 @@
 var prog;
 var prg_show;
 var FBO, FBO1, FBO2;
-var texture, texture1, texture2;
+var texture0, texture1, texture2, texture3, texture4, texture5;
+var textureCount = 0;
+var textList = [texture0, texture1, texture2, texture3, texture4, texture5,];
 var c_w, c_h; //canvas width and height
 var timer, delay = 0, frames = 0;
-var time, animation, pix;
+var time, animation, pix, animTimer;
 var n = 512, n1 = n-1;
 var prMatrix, mvMat, mvMatLoc, rotMat, posLocation, sampLoc, samp1Loc;
 
@@ -14,7 +16,7 @@ function main() {
 	c_w = 600; //window.innerWidth - 50
 	c_h = 512; //window.innerHeight - 10
 	canvas.width = c_w;  
-	canvas.height = c_h
+	canvas.height = c_h;
 	
 	var err = "Your browser does not support "
 	var ext
@@ -39,6 +41,10 @@ function main() {
 		return;
 	}
 
+
+	/**************************************************
+	*/
+	
 	prog  = gl.createProgram();
 	gl.attachShader(prog, getShader( gl, "shader-vs" ));
 	gl.attachShader(prog, getShader( gl, "shader-fs" ));
@@ -47,6 +53,7 @@ function main() {
 	gl.useProgram(prog);
 	var aPosLoc = gl.getAttribLocation(prog, "aPos");
 	gl.enableVertexAttribArray( aPosLoc );
+	
 	var data = new Float32Array([-1,-1,  1,-1,  -1,1,  1,1]);
 	gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
 	gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
@@ -55,53 +62,19 @@ function main() {
 	pix = new Float32Array(4*n*n)
 	var p = 0;
 	var h = 1/n1;
+	
 	for(var i = 0; i < n; i++ ) {
 		for(var j = 0; j < n; j++ ){
 			var x = h*(j-n/2);
 			var y = h*(i-n/2);
-			pix[p++] = .8*Math.exp(-2500*(x*x + y*y));
+			pix[p++] = 0;
 			pix[p++] = 0;
 			pix[p++] = 0;
 			pix[p++] = 0;
 		}
 	}
 	
-	texture1 = gl.createTexture();
-	gl.activeTexture(gl.TEXTURE1);
-	gl.bindTexture(gl.TEXTURE_2D, texture1);
-	gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-	texture2 = gl.createTexture();
-	gl.activeTexture(gl.TEXTURE2);
-	gl.bindTexture(gl.TEXTURE_2D, texture2);
-	gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-	texture = gl.createTexture();
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-	FBO = gl.createFramebuffer();
-	gl.bindFramebuffer(gl.FRAMEBUFFER, FBO);
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-	   gl.TEXTURE_2D, texture, 0);
-	FBO1 = gl.createFramebuffer();
-	gl.bindFramebuffer(gl.FRAMEBUFFER, FBO1);
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-	   gl.TEXTURE_2D, texture1, 0);
-	FBO2 = gl.createFramebuffer();
-	gl.bindFramebuffer(gl.FRAMEBUFFER, FBO2);
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-	   gl.TEXTURE_2D, texture2, 0);
+	initTexture();
 	
 	if( gl.checkFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE) {
 		alert(err + "FLOAT as the color attachment to an FBO");
@@ -121,7 +94,7 @@ function main() {
 	gl.uniform1f(gl.getUniformLocation(prog_show, "d"), 1/n);
 
 	var pt = new Float32Array(2*n*n);
-	p = 0
+	p = 0;
 	for(var i = 0; i < n; i++) {
 		for(var j = 0; j < n; j++) {
 			pt[p++] = h*j;  
@@ -157,7 +130,6 @@ function main() {
 	mvMatrix = new CanvasMatrix4();
 	rotMat = new CanvasMatrix4();
 	rotMat.makeIdentity();
-	//rotMat.scale(0.8,0.8,1,0)
 	rotMat.rotate(-30, 1,0,0);
 	
 	mvMatLoc = gl.getUniformLocation(prog_show,"mvMatrix");
@@ -223,29 +195,87 @@ function drawScene() {
 	gl.drawElements(gl.TRIANGLE_STRIP, 2*n1*(n+1) - 2, gl.UNSIGNED_INT, 0);
 }
 
+function initTexture() {
+	texture1 = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE1);
+	gl.bindTexture(gl.TEXTURE_2D, texture1);
+	gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+	texture2 = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE2);
+	gl.bindTexture(gl.TEXTURE_2D, texture2);
+	gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+	texture0 = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, texture0);
+	gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+	FBO = gl.createFramebuffer();
+	gl.bindFramebuffer(gl.FRAMEBUFFER, FBO);
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+	   gl.TEXTURE_2D, texture0, 0);
+	FBO1 = gl.createFramebuffer();
+	gl.bindFramebuffer(gl.FRAMEBUFFER, FBO1);
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+	   gl.TEXTURE_2D, texture1, 0);
+	FBO2 = gl.createFramebuffer();
+	gl.bindFramebuffer(gl.FRAMEBUFFER, FBO2);
+	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+	   gl.TEXTURE_2D, texture2, 0);
+}
 
 function anim() {
 	draw();
 	switch ( animation ) {
 	case "reset":
-		gl.bindTexture(gl.TEXTURE_2D, texture1);
+		animReset();
+		animation = "animate";
+		gl.bindTexture(gl.TEXTURE_2D, texture0);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
 		animation = "animate";
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
 	case "animate":
-		if (delay == 0) {
-			requestAnimationFrame(anim);
-		}
-		else {
-			setTimeout("requestAnimationFrame(anim)", delay);
-			break;
-		}
+		requestAnimationFrame(anim);
 	case "stop":
 		break;
    }
 }
 
+function animReset() {
+	animTimer = 0;
+	animTimer = setTimeout(flat, 10000);
+	pix = new Float32Array(4*n*n);
+	var p = 0;
+	var h = 1/n1;
+	
+	for(var i = 0; i < n; i++ ) {
+		for(var j = 0; j < n; j++ ){
+			var x = h*(j-n/2);
+			var y = h*(i-n/2);
+			pix[p++] = 0.1*Math.exp(-2500*(x*x + y*y));
+			pix[p++] = 0;
+			pix[p++] = 0;
+			pix[p++] = 0;
+		}
+	}
+	gl.bindTexture(gl.TEXTURE_2D, texture1);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
+}
+
+function flat() {
+	pix = new Float32Array(4*n*n);
+	gl.bindTexture(gl.TEXTURE_2D, texture1);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
+}
 
 function run(v) {
 	if( animation == "animate") {
@@ -278,9 +308,4 @@ function fr() {
 	document.getElementById("framerate").value = fps;
 	frames = 0;
 	time = ti;
-}
-
-
-function setDelay(val) {
-	delay = parseInt(val);
 }

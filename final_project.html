@@ -12,60 +12,64 @@
 	uniform mat4 mvMatrix;
 	uniform mat4 prMatrix;
 	uniform float d;
-	varying vec4 color;
 	uniform sampler2D samp;
-	const vec4 dirDif = vec4(0., 0., 1., 0.);
-	const vec4 dirHalf = vec4(-.4034, .259, .8776, 0.);
+	const vec4 dirDif = vec4(0, 0, 1, 0);
+	const vec4 dirHalf = vec4(-.4034, 0.259, 0.8776, 0);
+	varying vec4 color;
 	
 	void main(void) {
 		float h = texture2D(samp, aPos ).r;
 		gl_Position = prMatrix * mvMatrix * vec4(aPos, h, 1.);
-		vec3 aNorm = vec3(texture2D(samp, vec2(aPos.x + d, aPos.y)).r - texture2D(samp, vec2(aPos.x - d, aPos.y)).r, texture2D(samp, vec2(aPos.x, aPos.y + d)).r - texture2D(samp, vec2(aPos.x, aPos.y - d)).r, -d-d);
+		vec3 aNorm = 
+			vec3(texture2D(samp, vec2(aPos.x + d, aPos.y)).r 
+				- texture2D(samp, vec2(aPos.x - d, aPos.y)).r, texture2D(samp, vec2(aPos.x, aPos.y + d)).r 
+				- texture2D(samp, vec2(aPos.x, aPos.y - d)).r, -d-d);
 		aNorm = normalize(aNorm);
 		vec4 rotNorm = mvMatrix * vec4(aNorm, .0);
 		float i = max( 0., abs(dot(rotNorm, dirDif)) );
 		color = vec4(.0, .8*i, i, 1); //Change Color
-		i = pow( max( 0., abs(dot(rotNorm, dirHalf)) ), 120.);
-		color += vec4(i, i, i, 0.);
+		i = pow( max( 0., abs(dot(rotNorm, dirHalf))), 120.0);
+		color += vec4(i, i, i, 0);
 	}
 </script>
 
 <script id="shader-fs-show" type="x-shader/x-fragment">
-precision highp float;
-varying vec4 color;
-void main(void) {
-	gl_FragColor = color;
-}
+	precision highp float;
+	varying vec4 color;
+	void main(void) {
+		gl_FragColor = color;
+	}
 </script>
 
 <script id="shader-vs" type="x-shader/x-vertex">
-attribute vec2 aPos;
-varying vec2 vTC;
+	attribute vec2 aPos;
+	varying vec2 vTC;
 
-void main(void) {
-	gl_Position = vec4(aPos, 0., 1.);
-	vTC = .5*aPos + .5;
-}
+	void main(void) {
+		gl_Position = vec4(aPos, 0, 1);
+		vTC = .5 * aPos + .5;
+	}
 </script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
-precision highp float;
-uniform sampler2D samp;
-uniform sampler2D samp1;
-varying vec2 vTC;
-const float d = 1./512., dth2 = .4;
+	precision highp float;
+	uniform sampler2D samp;
+	uniform sampler2D samp1;
+	varying vec2 vTC;
+	const float d = 1.0/512.0;
+	const float dth2 = .4;
 
-void main(void) {
-	float u = texture2D(samp, vTC).r;
-	float u1  = texture2D(samp1, vTC).r;
-	u = 2.*u1 - u +
-	(texture2D(samp1, vec2(vTC.x, vTC.y + d) ).r +
-	texture2D(samp1, vec2(vTC.x, vTC.y - d) ).r +
-	texture2D(samp1, vec2(vTC.x + d, vTC.y) ).r +
-	texture2D(samp1, vec2(vTC.x - d, vTC.y) ).r +
-	- 4.*u1)*dth2;
-	gl_FragColor = vec4(u, 0., 0., 0.);
-}
+	void main(void) {
+		float u = texture2D(samp, vTC).r;
+		float u1  = texture2D(samp1, vTC).r;
+		u = 2.*u1 - u +
+		(texture2D(samp1, vec2(vTC.x, vTC.y + d) ).r +
+		texture2D(samp1, vec2(vTC.x, vTC.y - d) ).r +
+		texture2D(samp1, vec2(vTC.x + d, vTC.y) ).r +
+		texture2D(samp1, vec2(vTC.x - d, vTC.y) ).r +
+		- 4.* u1)* dth2;
+		gl_FragColor = vec4(u, 0., 0., 0.);
+	}
 </script>
 </head>
 
@@ -74,7 +78,7 @@ void main(void) {
 <h1>CS114 Final Project: Shallow Water Simulation</h1>
 <div id="authors">Ryan Apolinar and Jason Tam</div>
 <canvas class="text-center" id="canvas" width="512" height="512"></canvas>
-<br><button onclick="reset()">Reset</button>
+<br><button onclick="reset()">Drop</button>
 <input type="button" onclick="run()" value="Stop" size="1" id="runBtn">
 	
 </body>
