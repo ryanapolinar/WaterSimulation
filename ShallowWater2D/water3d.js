@@ -20,11 +20,9 @@ var main = function() {
     } , false);
     CANVAS.addEventListener("mousedown", function() {
       SOURCEFLOW = 4;
-      console.log("mousedown");
     } , false);
     CANVAS.addEventListener("mouseup", function() {
       SOURCEFLOW = 0;
-      console.log("mouseup");
     } , false);
 
 
@@ -189,45 +187,15 @@ var main = function() {
     /* ----- THE QUAD ----- */
     // POINTS :
 
-    var quad_vertex = [
-
-      -1,-1, // bottom left
-      1,-1,  // bottom right
-      1,1,   // top right
-      -1,1   // top left
-      /*
-      -1, 0, -1,
-      0, 0, -1,
-      1, 0, -1,
-      -1, 0, 0,
-      0, 0, 0,
-      1, 0, 0,
-      -1, 0, 1,
-      0, 0, 1,
-      1, 0, 1,
-      */
-    ];
+    var quad_vertex = generateVertices(64);
 
     var QUAD_VERTEX= GL.createBuffer ();
     GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
     GL.bufferData(GL.ARRAY_BUFFER,new Float32Array(quad_vertex),GL.STATIC_DRAW);
 
     //FACES:
-    var quad_faces = [
+    var quad_faces = generateFaces(64);
 
-      0,1,2,
-      0,2,3,
-      /*
-      0, 1, 3,
-      1, 4, 3,
-      1, 2, 4,
-      2, 5, 4,
-      3, 4, 6,
-      4, 7, 6,
-      4, 5, 7,
-      5, 8, 7
-      */
-    ];
     var QUAD_FACES= GL.createBuffer ();
     GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
     GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(quad_faces),GL.STATIC_DRAW);
@@ -376,7 +344,7 @@ var main = function() {
         GL.viewport(0.0, 0.0, SIMUSIZEPX, SIMUSIZEPX);
         GL.enableVertexAttribArray(SHP_VARS.copy.position);
         GL.bindTexture(GL.TEXTURE_2D, texture_water);
-        GL.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
+        GL.drawElements(GL.TRIANGLES, quad_faces.length, GL.UNSIGNED_SHORT, 0);
         GL.disableVertexAttribArray(SHP_VARS.copy.position);
 
         // GPGPU PHYSICAL SIMULATION :
@@ -393,7 +361,7 @@ var main = function() {
           GL.uniform1f(SHP_VARS.water.sourceFlow, SOURCEFLOW);
           GL.uniform1f(SHP_VARS.water.dt, dt/GPGPU_NPASS);
         }
-        GL.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
+        GL.drawElements(GL.TRIANGLES, quad_faces.length, GL.UNSIGNED_SHORT, 0);
         GL.disableVertexAttribArray(SHP_VARS.water.position);
 
         //NORMALS : compute normals from the water map
@@ -401,7 +369,7 @@ var main = function() {
         GL.useProgram(normalShader);
         GL.enableVertexAttribArray(SHP_VARS.normals.position);
         GL.bindTexture(GL.TEXTURE_2D, texture_water);
-        GL.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
+        GL.drawElements(GL.TRIANGLES, quad_faces.length, GL.UNSIGNED_SHORT, 0);
         GL.disableVertexAttribArray(SHP_VARS.normals.position);
 
       } // end of GPGPU_NPASS
@@ -445,23 +413,19 @@ var main = function() {
          mvMatrix);
 
       // 3D SHADER PROGRAM RENDERING INIT
-      GL.useProgram(shader3D);
-      GL.enableVertexAttribArray(SHP_VARS.three.aPos);
+      GL.enableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
       //GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
       GL.uniform1i(SHP_VARS.three.sampler, 0);
       GL.uniform1i(SHP_VARS.three.sampler_normals, 1);
       GL.vertexAttribPointer(SHP_VARS.three.aPos, 2, GL.FLOAT, false,8,0) ;
       //GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
-      GL.disableVertexAttribArray(SHP_VARS.three.aPos);
 
-
-      GL.enableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
       GL.viewport(0.0, 0.0, CANVAS.width, CANVAS.height);
       GL.activeTexture(GL.TEXTURE1);
       GL.bindTexture(GL.TEXTURE_2D, texture_normals);
       GL.activeTexture(GL.TEXTURE0);
       GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
-      GL.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
+      GL.drawElements(GL.TRIANGLES, quad_faces.length, GL.UNSIGNED_SHORT, 0);
       // Disable rendering attributes for next loop
       GL.disableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
 
@@ -471,3 +435,72 @@ var main = function() {
 
     animate(new Date().getTime());
   };
+
+function generateVertices(n){
+  // Given n, generates n x n quad_vertices between [-1, 1]
+  var quad = [];
+  var step = 2 / (n - 1);
+  for (var i = 0; i < n; i++){
+    for (var j = 0; j < n; j++){
+      // Push the x coordinate
+      var x = (j * step) - 1.0;
+      quad.push(x);
+      //console.log("j * step (x): " + x);
+      // Push the y coordinate
+      var y = (i * step) - 1.0;
+      quad.push(y);
+      //console.log("i * step (y): " + y);
+    }
+  }
+
+  return quad;
+}
+
+function generateFaces(n){
+  // Given n, generates faces for an n x n quad
+  var faces = [];
+  /*
+  generateFaces(2)
+  0,1,3,
+  0,3,2
+  generateFaces(3)
+  0,1,4,
+  0,4,3,
+
+  1,2,5,
+  1,5,4,
+
+  3,4,7,
+  3,7,6,
+
+  4,5,8,
+  4,8,7,
+  */
+  // Create a lookup tool
+  var vertices = [];
+  for (var i = 0; i < n; i++){
+    var row = [];
+    for (var j = 0; j < n; j++){
+      var vertex_num = (n*i) + j;
+      row.push(vertex_num);
+    }
+    vertices.push(row);
+  }
+
+  // Create the faces
+  for (var row = 0; row < (n-1); row++){
+    for (var col = 0; col < (n-1); col++){
+      // First triangle of the square
+      faces.push(vertices[row][col]);
+      faces.push(vertices[row][col + 1]);
+      faces.push(vertices[row + 1][col + 1]);
+
+      // Second triangle of the square
+      faces.push(vertices[row][col]);
+      faces.push(vertices[row + 1][col + 1]);
+      faces.push(vertices[row + 1][col]);
+    }
+  }
+  console.log(faces);
+  return faces;
+}
