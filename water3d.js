@@ -1,13 +1,34 @@
-var main = function() {
+var GL;
+var grav = -9.8;
+var drag = 0.02;
+var visc = 0.001;
+var colorRed = 0.0;
+var colorGre = 0.0;
+var colorBlu = 0.5;
+var norm = 1.0;
+var CANVAS;
+var vertex_number = 128;  // Number of vertices used
+var SIMUSIZEPX = 256;     // GPGPU simulation texture size in pixel
+var SIMUWIDTH = 2;        // Simulation size in meters
+var GPGPU_NPASS = 3;      // Number of GPGPU pass per rendering
 
-    var CANVAS = document.getElementById("canvas");
+var SHP_VARS = {};
+var shader3D;
+var waterShader;
+var locationOfRed;
+var locationOfGre;
+var locationOfBlu;
+var locationOfNorm;
+
+var main = function() {
+    CANVAS = document.getElementById("canvas");
     CANVAS.height = Math.min(window.innerWidth, window.innerHeight);
     CANVAS.width= CANVAS.height;
-    var GL = CANVAS.getContext("webgl", {antialias: false, alpha: false});
+    GL = CANVAS.getContext("webgl", {antialias: false, alpha: false});
 
     /* ----- MOUSE DETECTION ----- */
-    var POINTER_X = 0.5;
-    var POINTER_Y = 0.5;
+	var POINTER_X = 0.5;
+	var POINTER_Y = 0.5;
 
     CANVAS.addEventListener("mousemove", function(event){
       // Keep track of where the mouse is
@@ -35,71 +56,27 @@ var main = function() {
       GL.getExtension('MOZ_OES_texture_float') ||
         GL.getExtension('WEBKIT_OES_texture_float');
 
-    /* ----- PARAMETERS ----- */
-    var vertex_number = 128;  // Number of vertices used
-    var SIMUSIZEPX = 256;     // GPGPU simulation texture size in pixel
-    var SIMUWIDTH = 2;        // Simulation size in meters
-    var GPGPU_NPASS = 3;      // Number of GPGPU pass per rendering
-
-    var SHP_VARS = {};
-
     /* ----- HELPER FUNCTIONS ----- */
-
-    // Loads a shader program from an HTML element
-    function loadShaderFromDOM(id) {
-      var shaderScript = document.getElementById(id);
-
-      // If we don't find an element with the specified id
-      // we do an early exit
-      if (!shaderScript) {
-        return null;
-      }
-
-      // Loop through the children for the found DOM element and
-      // build up the shader source code as a string
-      var shaderSource = "";
-      var currentChild = shaderScript.firstChild;
-      while (currentChild) {
-        if (currentChild.nodeType == 3) { // 3 corresponds to TEXT_NODE
-          shaderSource += currentChild.textContent;
-        }
-        currentChild = currentChild.nextSibling;
-      }
-
-      var shader;
-      if (shaderScript.type == "x-shader/x-fragment") {
-        shader = GL.createShader(GL.FRAGMENT_SHADER);
-      } else if (shaderScript.type == "x-shader/x-vertex") {
-        shader = GL.createShader(GL.VERTEX_SHADER);
-      } else {
-        return null;
-      }
-
-      GL.shaderSource(shader, shaderSource);
-      GL.compileShader(shader);
-
-      if (!GL.getShaderParameter(shader, GL.COMPILE_STATUS)) {
-        alert(GL.getShaderInfoLog(shader));
-        return null;
-      }
-      return shader;
-    }
 
     /* ----- 3D SHADER ----- */
     var vertexShader3D = loadShaderFromDOM("vert-shader-3D");
     var fragmentShader3D = loadShaderFromDOM("frag-shader-3D");
 
-    var shader3D = GL.createProgram();
+    shader3D = GL.createProgram();
     GL.attachShader(shader3D, vertexShader3D);
     GL.attachShader(shader3D, fragmentShader3D);
     GL.linkProgram(shader3D);
+	
+	locationOfRed = GL.getUniformLocation(shader3D, "red");
+	locationOfGre = GL.getUniformLocation(shader3D, "gre");
+	locationOfBlu = GL.getUniformLocation(shader3D, "blu");
+	locationOfNorm = GL.getUniformLocation(shader3D, "norm");
 
     SHP_VARS.three = {
       mvMatrix: GL.getUniformLocation(shader3D, "mvMatrix"),
       prMatrix: GL.getUniformLocation(shader3D, "prMatrix"),
       sampler: GL.getUniformLocation(shader3D, "sampler"),
       sampler_normals: GL.getUniformLocation(shader3D, "sampler_normals"),
-
       aPos: GL.getAttribLocation(shader3D, "aPos"),
     }
 
@@ -107,7 +84,7 @@ var main = function() {
     vertexShader = loadShaderFromDOM("vert-shader-render");
     var waterFragShader = loadShaderFromDOM("frag-shader-water");
 
-    var waterShader = GL.createProgram();
+    waterShader = GL.createProgram();
     GL.attachShader(waterShader, vertexShader);
     GL.attachShader(waterShader, waterFragShader);
     GL.linkProgram(waterShader);
@@ -242,6 +219,11 @@ var main = function() {
     GL.useProgram(shader3D);
     GL.uniform1i(SHP_VARS.three.sampler, 0);
     GL.uniform1i(SHP_VARS.three.sampler_normals, 1);
+	GL.uniform1f(locationOfRed, colorRed);
+	GL.uniform1f(locationOfGre, colorGre);
+	GL.uniform1f(locationOfBlu, colorBlu);
+	GL.uniform1f(locationOfNorm, norm);
+	
 
     //SHADER PROGRAM GPGPU WATER INIT
     GL.useProgram(waterShader);
@@ -249,9 +231,9 @@ var main = function() {
     GL.uniform1i(SHP_VARS.water.sampler_normals, 1);
 
     // SIMULATE A SQUARE WATER SURFACE SIDE MEASURING (SIMUWIDTH) METERS
-    GL.uniform1f(SHP_VARS.water.g, -9.8);                       // gravity acceleration
-    GL.uniform1f(SHP_VARS.water.H, 0.01);                       // mean height of water in meters
-    GL.uniform1f(SHP_VARS.water.b, 0.001);                      // viscous drag coefficient
+    GL.uniform1f(SHP_VARS.water.g, grav);                       // gravity acceleration
+    GL.uniform1f(SHP_VARS.water.H, drag);                       // mean height of water in meters
+    GL.uniform1f(SHP_VARS.water.b, visc);                      // viscous drag coefficient
     GL.uniform1f(SHP_VARS.water.epsilon, 1 / SIMUSIZEPX);       // used to compute space derivatives
     GL.uniform1f(SHP_VARS.water.scale, SIMUWIDTH / SIMUSIZEPX);
     // Set the water source flow and radius
@@ -397,6 +379,46 @@ function generateVertices(n){
   return quad;
 }
 
+// Loads a shader program from an HTML element
+function loadShaderFromDOM(id) {
+  var shaderScript = document.getElementById(id);
+
+  // If we don't find an element with the specified id
+  // we do an early exit
+  if (!shaderScript) {
+	return null;
+  }
+
+  // Loop through the children for the found DOM element and
+  // build up the shader source code as a string
+  var shaderSource = "";
+  var currentChild = shaderScript.firstChild;
+  while (currentChild) {
+	if (currentChild.nodeType == 3) { // 3 corresponds to TEXT_NODE
+	  shaderSource += currentChild.textContent;
+	}
+	currentChild = currentChild.nextSibling;
+  }
+
+  var shader;
+  if (shaderScript.type == "x-shader/x-fragment") {
+	shader = GL.createShader(GL.FRAGMENT_SHADER);
+  } else if (shaderScript.type == "x-shader/x-vertex") {
+	shader = GL.createShader(GL.VERTEX_SHADER);
+  } else {
+	return null;
+  }
+
+  GL.shaderSource(shader, shaderSource);
+  GL.compileShader(shader);
+
+  if (!GL.getShaderParameter(shader, GL.COMPILE_STATUS)) {
+	alert(GL.getShaderInfoLog(shader));
+	return null;
+  }
+  return shader;
+}
+
 function generateFaces(n){
   // Given n, generates faces for an n x n quad
   var faces = [];
@@ -427,4 +449,85 @@ function generateFaces(n){
     }
   }
   return faces;
+}
+
+function updateGravity(gravity) {
+	var value = gravity*0.1;
+	$("#sliderAmountGravity").html(value.toFixed(1));
+	grav = -9.8 * value;
+	GL.useProgram(waterShader);
+	GL.uniform1f(SHP_VARS.water.g, grav);
+}
+
+function updateDrag(dragVal) {
+	var value = dragVal;
+	$("#sliderAmountDrag").html(value);
+	drag = 0.02 / value;
+	GL.useProgram(waterShader);
+	GL.uniform1f(SHP_VARS.water.H, drag);
+}
+
+function updateVisc(viscVal) {
+	var value = viscVal;
+	$("#sliderAmountVisc").html(value);
+	visc = 0.001 * value * value * value * value;
+	GL.useProgram(waterShader);
+	GL.uniform1f(SHP_VARS.water.b, visc);
+}
+
+function updateRed(redVal) {
+	var value = redVal * 0.1;
+	$("#sliderAmountRed").html(value.toFixed(1));
+	colorRed = value;
+	GL.useProgram(shader3D);
+	GL.uniform1f(locationOfRed, colorRed);
+}
+
+function updateColor(colVal) {
+	var id = parseInt(colVal, 10);
+	switch (id) {
+		case 1:
+			colorRed = 0.0;
+			colorGre = -0.13;
+			colorBlu = -0.6;
+			norm = 1.0;
+			grav = -12.0;
+			drag = 0.03;
+			visc = 0;
+			break;
+		case 2:
+			colorRed = 0.0;
+			colorGre = 0.0;
+			colorBlu = 0.5;
+			norm = 1.0;
+			grav = -9.8
+			drag = 0.02;
+			visc = 0.001;
+			break;
+		case 3:
+			colorRed = 0.55;
+			colorGre = -0.13;
+			colorBlu = -0.6;
+			norm = 2.0;
+			grav = -3;
+			drag = 0.01;
+			visc = 1;
+			break;
+	}
+	GL.useProgram(shader3D);
+	GL.uniform1f(locationOfRed, colorRed);
+	GL.uniform1f(locationOfGre, colorGre);
+	GL.uniform1f(locationOfBlu, colorBlu);
+	GL.uniform1f(locationOfNorm, norm);
+	GL.useProgram(waterShader);
+	GL.uniform1f(SHP_VARS.water.g, grav);
+	GL.uniform1f(SHP_VARS.water.H, drag);
+	GL.uniform1f(SHP_VARS.water.b, visc);
+}
+
+function reset(){
+	updateGravity(10);
+	updateDrag(1.0);
+	updateVisc(1.0);
+	updateColor(2);
 }

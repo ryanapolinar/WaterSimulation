@@ -23,11 +23,15 @@
 
     	uniform mat4 mvMatrix;
     	uniform mat4 prMatrix;
+		uniform float red;
+		uniform float gre;
+		uniform float blu;
+		uniform float norm;
     	uniform sampler2D sampler;
-      uniform sampler2D sampler_normals;
+      	uniform sampler2D sampler_normals;
 
-      varying vec4 color;
-      varying vec2 vUV;
+		varying vec4 color;
+		varying vec2 vUV;
 
     	const vec4 dirDif = vec4(0.0, 0.0, 1.0, 0.0);
     	const vec4 dirHalf = vec4(-0.4034, 0.259, 0.8776, 0.0);
@@ -42,14 +46,14 @@
         float height = water.a;
     		gl_Position = prMatrix * mvMatrix * vec4(aPos, height, 1.0);
 
-    		vec3 aNorm = water.rgb + vec3(0.0, 0.0, 1.0);
+    		vec3 aNorm = water.rgb + vec3(0.0, 0.0, norm);
     		aNorm = normalize(aNorm);
     		vec4 rotNorm = mvMatrix * vec4(aNorm, 0.0);
     		float i = max(0.0, abs(dot(rotNorm, dirDif)));
-    		color = vec4(0.0, 0.8 * i, i, 1); //Change Color
+    		color = vec4(0.0, i, i, 1); //Change Color
     		i = pow(max(0.0, abs(dot(rotNorm, dirHalf)) ), 120.0);
     		color += vec4(i, i, i, 0.0);
-        color +=  vec4(0.0, 0.0, 0.5, 0.75);  // add a little bit of blue
+        color += vec4(red, gre, blu, 0.1);
     	}
     </script>
 
@@ -184,7 +188,7 @@
     </div>
 
     <div class="container-fluid">
-      <div id="title">CS 114 - SHALLOW WATER</div>
+      <div id="title">CS 114 - SHALLOW WATER SIMULATION</div>
       <div id="authors" class="text-center">Ryan Apolinar and Jason Tam</div>
 
       <div class="description">
@@ -196,6 +200,54 @@
         <p>
           Click anywhere to the left of the white line to create ripples in the water.
         </p>
+		<table>
+		<tr>
+                    <td width="200px"><b><u>Change Values</u></b></td>
+                    <td width="230px">
+                    </td>
+		</tr>
+		<tr>
+			<td>Gravity</td>
+			<td>
+				<input type="range" min="1" max="20" value="10" onchange="updateGravity(this.value);">
+				(<span id="sliderAmountGravity">1.0</span>)
+			</td>
+		</tr>
+		<tr>
+			<td>Drag</td>
+			<td>
+				<input type="range" min="1" max="5" value="1" onchange="updateDrag(this.value);">
+				(<span id="sliderAmountDrag">1</span>)
+			</td>
+		</tr>
+		<tr>
+			<td>Viscosity</td>
+			<td>
+				<input type="range" min="1" max="10" value="1" onchange="updateVisc(this.value);">
+				(<span id="sliderAmountVisc">1</span>)
+			</td>
+		</tr>
+		<tr>
+			<td>Tint</td>
+			<td>
+				<input type="range" min="0" max="10" value="0" onchange="updateRed(this.value);">
+				(<span id="sliderAmountRed">0</span>)
+			</td>
+		</tr>
+		<tr>
+			<td width="200px">Alternate Fluids</td>
+			<td width="230px">
+				<select onchange="updateColor(this.value);">
+					<option value="1">Acid</option>
+					<option value="2" selected="selected">Water</option>
+					<option value="3">Honey</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td><button onclick="reset()">Reset</button></td>
+		</tr>
+		</table>
       </div>
     </div>
   </body>

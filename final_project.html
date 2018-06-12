@@ -80,6 +80,18 @@
 <canvas class="text-center" id="canvas" width="512" height="512"></canvas>
 <br><button onclick="reset()">Drop</button>
 <input type="button" onclick="run()" value="Stop" size="1" id="runBtn">
+<div class="panel" style="margin-left:10px">
+        <p>Wave Strength</p>
+        <table>
+			<tr>
+				<td>Ambient</td>
+				<td>
+					<input type="range" min="0" max="50" value="10" onchange="updateSlider_Ambient(this.value);">
+					(<span id="sliderAmount_Ambient">0.1</span>)
+				</td>
+			</tr>
+        </table>		
+	</div>
 	
 </body>
 </html>

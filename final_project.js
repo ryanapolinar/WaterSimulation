@@ -1,9 +1,7 @@
 var prog;
 var prg_show;
 var FBO, FBO1, FBO2;
-var texture0, texture1, texture2, texture3, texture4, texture5;
-var textureCount = 0;
-var textList = [texture0, texture1, texture2, texture3, texture4, texture5,];
+var texture0, texture1, texture2;
 var c_w, c_h; //canvas width and height
 var timer, delay = 0, frames = 0;
 var time, animation, pix, animTimer;
@@ -59,14 +57,13 @@ function main() {
 	gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 	gl.vertexAttribPointer(aPosLoc, 2, gl.FLOAT, gl.FALSE, 0, 0);
 
-	pix = new Float32Array(4*n*n)
+	pix = new Float32Array(4*n*n);
 	var p = 0;
 	var h = 1/n1;
 	
+	
 	for(var i = 0; i < n; i++ ) {
 		for(var j = 0; j < n; j++ ){
-			var x = h*(j-n/2);
-			var y = h*(i-n/2);
 			pix[p++] = 0;
 			pix[p++] = 0;
 			pix[p++] = 0;
@@ -242,7 +239,6 @@ function anim() {
 		animation = "animate";
 		gl.bindTexture(gl.TEXTURE_2D, texture0);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, n, n, 0, gl.RGBA, gl.FLOAT, pix);
-		animation = "animate";
 	case "animate":
 		requestAnimationFrame(anim);
 	case "stop":
@@ -251,7 +247,7 @@ function anim() {
 }
 
 function animReset() {
-	animTimer = 0;
+	clearTimeout(animTimer);
 	animTimer = setTimeout(flat, 10000);
 	pix = new Float32Array(4*n*n);
 	var p = 0;
@@ -261,7 +257,7 @@ function animReset() {
 		for(var j = 0; j < n; j++ ){
 			var x = h*(j-n/2);
 			var y = h*(i-n/2);
-			pix[p++] = 0.1*Math.exp(-2500*(x*x + y*y));
+			pix[p++] = sliderValue*Math.exp(-2500*(x*x + y*y));
 			pix[p++] = 0;
 			pix[p++] = 0;
 			pix[p++] = 0;
@@ -301,6 +297,11 @@ function reset() {
 	}
 }
 
+function updateSlider_Ambient(sliderAmount) {
+    var value = sliderAmount/100.0;
+    $("#sliderAmount_Ambient").html(value);
+    ambientIntensity = value;
+}
 
 function fr() {
 	var ti = new Date().getTime();
