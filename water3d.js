@@ -67,7 +67,7 @@ var main = function() {
     GL.attachShader(shader3D, vertexShader3D);
     GL.attachShader(shader3D, fragmentShader3D);
     GL.linkProgram(shader3D);
-	
+
 	locationOfRed = GL.getUniformLocation(shader3D, "red");
 	locationOfGre = GL.getUniformLocation(shader3D, "gre");
 	locationOfBlu = GL.getUniformLocation(shader3D, "blu");
@@ -224,7 +224,7 @@ var main = function() {
 	GL.uniform1f(locationOfGre, colorGre);
 	GL.uniform1f(locationOfBlu, colorBlu);
 	GL.uniform1f(locationOfNorm, norm);
-	
+
 
     //SHADER PROGRAM GPGPU WATER INIT
     GL.useProgram(waterShader);
@@ -535,9 +535,12 @@ function updateColor(colVal) {
 }
 
 function reset(){
+  /*
 	updateGravity(10);
 	updateDrag(1.0);
 	updateVisc(1.0);
 	updateColor(2);
 	updateSFR(4);
+  */
+  window.location.reload();
 }
