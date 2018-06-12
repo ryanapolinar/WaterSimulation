@@ -6,7 +6,7 @@ var main = function() {
     var GL = CANVAS.getContext("webgl", {antialias: false, alpha: false});
 
     /* ----- MOUSE DETECTION ----- */
-    var POINTER_X = 0.0;
+    var POINTER_X = 0.5;
     var POINTER_Y = 0.5;
 
     CANVAS.addEventListener("mousemove", function(event){
@@ -16,13 +16,13 @@ var main = function() {
     }, false);
 
     SOURCEFLOW = 0;
-    CANVAS.addEventListener("mouseout", function() {
-      // Stop when mouse goes outside of canvas
-      SOURCEFLOW = 0;
-    }, false);
     CANVAS.addEventListener("mousedown", function() {
       // Start when user clicks
       SOURCEFLOW = 4;
+    }, false);
+    CANVAS.addEventListener("mouseout", function() {
+      // Stop when mouse goes outside of canvas
+      SOURCEFLOW = 0;
     }, false);
     CANVAS.addEventListener("mouseup", function() {
       // Stop when user releases the click
