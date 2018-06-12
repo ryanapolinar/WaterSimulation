@@ -2,6 +2,7 @@ var GL;
 var grav = -9.8;
 var drag = 0.02;
 var visc = 0.001;
+var sfr = 0.04;
 var colorRed = 0.0;
 var colorGre = 0.0;
 var colorBlu = 0.5;
@@ -238,7 +239,7 @@ var main = function() {
     GL.uniform1f(SHP_VARS.water.scale, SIMUWIDTH / SIMUSIZEPX);
     // Set the water source flow and radius
     GL.uniform1f(SHP_VARS.water.sourceFlow, 4);
-    GL.uniform1f(SHP_VARS.water.sourceRadius, 0.04);            // % of the surface flowed by the source
+    GL.uniform1f(SHP_VARS.water.sourceRadius, sfr);            // % of the surface flowed by the source
     // Send quad to vertex shader
     GL.enableVertexAttribArray(SHP_VARS.water.position);
     GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
@@ -475,6 +476,14 @@ function updateVisc(viscVal) {
 	GL.uniform1f(SHP_VARS.water.b, visc);
 }
 
+function updateSFR(sfrVal) {
+	var value = sfrVal;
+	$("#sliderAmountSFR").html(value);
+	sfr = 0.01 * value;
+	GL.useProgram(waterShader);
+	GL.uniform1f(SHP_VARS.water.sourceRadius, sfr);
+}
+
 function updateRed(redVal) {
 	var value = redVal * 0.1;
 	$("#sliderAmountRed").html(value.toFixed(1));
@@ -530,4 +539,5 @@ function reset(){
 	updateDrag(1.0);
 	updateVisc(1.0);
 	updateColor(2);
+	updateSFR(4);
 }
