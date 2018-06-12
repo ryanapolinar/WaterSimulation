@@ -16,42 +16,6 @@
     <script src="js/webgl-utils.js"></script>
     <script type="text/javascript" src="water.js"></script>
 
-    <!-- 3D RENDERING SHADERS -->
-    <script id="vert-shader-3D" type="x-shader/x-vertex">
-    	attribute vec2 aPos;
-    	uniform mat4 mvMatrix;
-    	uniform mat4 prMatrix;
-    	uniform float d;
-    	varying vec4 color;
-    	uniform sampler2D samp;
-    	const vec4 dirDif = vec4(0., 0., 1., 0.);
-    	const vec4 dirHalf = vec4(-.4034, .259, .8776, 0.);
-
-    	void main(void) {
-    		float h = texture2D(samp, aPos ).r;
-    		gl_Position = prMatrix * mvMatrix * vec4(aPos, h, 1.);
-    		vec3 aNorm = vec3(texture2D(samp, vec2(aPos.x + d, aPos.y)).r -
-          texture2D(samp, vec2(aPos.x - d, aPos.y)).r,
-          texture2D(samp, vec2(aPos.x, aPos.y + d)).r -
-          texture2D(samp, vec2(aPos.x, aPos.y - d)).r, -d-d);
-    		aNorm = normalize(aNorm);
-    		vec4 rotNorm = mvMatrix * vec4(aNorm, .0);
-    		float i = max( 0., abs(dot(rotNorm, dirDif)) );
-    		color = vec4(.0, .8*i, i, 1); //Change Color
-    		i = pow( max( 0., abs(dot(rotNorm, dirHalf)) ), 120.);
-    		color += vec4(i, i, i, 0.);
-    	}
-    </script>
-
-    <script id="frag-shader-3D" type="x-shader/x-fragment">
-      precision highp float;
-
-      varying vec4 color;
-      void main(void) {
-        gl_FragColor = color;
-      }
-    </script>
-
     <!-- 2D RENDERING SHADERS -->
 
     <script id="vert-shader-render" type="x-shader/x-vertex">
@@ -186,7 +150,16 @@
   <body onload='main()'>
     <div class="container-fluid">
       <div id="row" class="text-center">
-            <canvas id='canvas'></canvas>
+          <canvas id='canvas'></canvas>
+      </div>
+      <div class="text-center">
+        Shallow Water - 2D Simulation
+      </div>
+      <div class="text-center">
+        An implementation of the shallow water equations in two dimensions.
+      </div>
+      <div class="text-center">
+        Drag your mouse over the canvas to create ripples.
       </div>
     </div>
   </body>

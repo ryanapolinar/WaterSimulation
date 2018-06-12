@@ -79,19 +79,6 @@ var main = function() {
       return shader;
     }
 
-    /* ----- 3D SHADER ----- */
-    var vertexShader3D = loadShaderFromDOM("vert-shader-3D");
-    var fragmentShader3D = loadShaderFromDOM("frag-shader-3D");
-
-    var shader3D = GL.createProgram();
-    GL.attachShader(shader3D, vertexShader3D);
-    GL.attachShader(shader3D, fragmentShader3D);
-    GL.linkProgram(shader3D);
-
-    SHP_VARS.three = {
-      position: GL.getAttribLocation(shader3D, "position"),
-    }
-
     /* ----- RENDERING SHADER ----- */
     vertexShader = loadShaderFromDOM("vert-shader-render");
     fragmentShader = loadShaderFromDOM("frag-shader-render");
