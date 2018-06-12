@@ -1,0 +1,30 @@
+body {
+  color: white;
+  background-color: black;
+  display: default;
+  overflow-y: hidden;
+}
+
+#title {
+  font-size: 2em;
+  text-align: center;
+}
+
+#canvas {
+  float: left;
+  border-right: solid 3px white;
+}
+
+.description {
+  float:left;
+  padding: 1em 0 0 5em;
+}
+
+a {
+  color:white;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: white;
+}

@@ -5,23 +5,27 @@ var main = function() {
     CANVAS.width= CANVAS.height;
     var GL = CANVAS.getContext("webgl", {antialias: false, alpha: false});
 
-    // Detect mouse movements
-    var POINTER_X=0.5, POINTER_Y=0.5;
+    /* ----- MOUSE DETECTION ----- */
+    var POINTER_X = 0.0;
+    var POINTER_Y = 0.5;
 
-    var mouseMove=function(event) {
-      POINTER_X=(event.clientX-CANVAS.offsetLeft)/CANVAS.width;
-      POINTER_Y=1-event.clientY/CANVAS.height;
-    };
-    CANVAS.addEventListener("mousemove", mouseMove, false);
-    // Detect if the mouse is in the canvas or not
-    SOURCEFLOW=0;
+    CANVAS.addEventListener("mousemove", function(event){
+      // Keep track of where the mouse is
+      POINTER_X = (event.clientX - CANVAS.offsetLeft) / CANVAS.width;
+      POINTER_Y = 1 - event.clientY / CANVAS.height;
+    }, false);
+
+    SOURCEFLOW = 0;
     CANVAS.addEventListener("mouseout", function() {
+      // Stop when mouse goes outside of canvas
       SOURCEFLOW = 0;
-    } , false);
+    }, false);
     CANVAS.addEventListener("mousedown", function() {
+      // Start when user clicks
       SOURCEFLOW = 4;
-    } , false);
+    }, false);
     CANVAS.addEventListener("mouseup", function() {
+      // Stop when user releases the click
       SOURCEFLOW = 0;
     } , false);
 
@@ -32,10 +36,10 @@ var main = function() {
         GL.getExtension('WEBKIT_OES_texture_float');
 
     /* ----- PARAMETERS ----- */
-
-    var SIMUSIZEPX = 512; //GPGPU simulation texture size in pixel
-    var SIMUWIDTH = 2;    //Simulation size in meters
-    var GPGPU_NPASS=3; //number of GPGPU pass per rendering
+    var vertex_number = 128;  // Number of vertices used
+    var SIMUSIZEPX = 256;     // GPGPU simulation texture size in pixel
+    var SIMUWIDTH = 2;        // Simulation size in meters
+    var GPGPU_NPASS = 3;      // Number of GPGPU pass per rendering
 
     var SHP_VARS = {};
 
@@ -93,36 +97,14 @@ var main = function() {
     SHP_VARS.three = {
       mvMatrix: GL.getUniformLocation(shader3D, "mvMatrix"),
       prMatrix: GL.getUniformLocation(shader3D, "prMatrix"),
-      d: GL.getUniformLocation(shader3D, "d"),
       sampler: GL.getUniformLocation(shader3D, "sampler"),
       sampler_normals: GL.getUniformLocation(shader3D, "sampler_normals"),
 
       aPos: GL.getAttribLocation(shader3D, "aPos"),
     }
 
-    /* ----- RENDERING SHADER ----- */
-    vertexShader = loadShaderFromDOM("vert-shader-render");
-    fragmentShader = loadShaderFromDOM("frag-shader-render");
-
-    var renderShader = GL.createProgram();
-    GL.attachShader(renderShader, vertexShader);
-    GL.attachShader(renderShader, fragmentShader);
-    GL.linkProgram(renderShader);
-
-
-    SHP_VARS.rendering = {
-      sampler: GL.getUniformLocation(renderShader, "sampler"),
-      sampler_normals: GL.getUniformLocation(renderShader, "sampler_normals"),
-      position: GL.getAttribLocation(renderShader, "position")
-    }
-
-    if (!GL.getProgramParameter(renderShader, GL.LINK_STATUS)) {
-      alert("Failed to setup shaders");
-    }
-
-    GL.useProgram(renderShader);
-
     /* ----- WATER SHADER ----- */
+    vertexShader = loadShaderFromDOM("vert-shader-render");
     var waterFragShader = loadShaderFromDOM("frag-shader-water");
 
     var waterShader = GL.createProgram();
@@ -185,38 +167,26 @@ var main = function() {
     GL.useProgram(normalShader);
 
     /* ----- THE QUAD ----- */
-    // POINTS :
 
-    var quad_vertex = generateVertices(64);
+    // VERTICES
+    var quad_vertex = generateVertices(vertex_number);
 
-    var QUAD_VERTEX= GL.createBuffer ();
+    var QUAD_VERTEX = GL.createBuffer ();
     GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
-    GL.bufferData(GL.ARRAY_BUFFER,new Float32Array(quad_vertex),GL.STATIC_DRAW);
+    GL.bufferData(GL.ARRAY_BUFFER, new Float32Array(quad_vertex), GL.STATIC_DRAW);
 
-    //FACES:
-    var quad_faces = generateFaces(64);
+    // TRIANGLE FACES
+    var quad_faces = generateFaces(vertex_number);
 
-    var QUAD_FACES= GL.createBuffer ();
+    var QUAD_FACES = GL.createBuffer();
     GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
-    GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(quad_faces),GL.STATIC_DRAW);
+    GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(quad_faces), GL.STATIC_DRAW);
 
 
     /* ----- THE TEXTURE ----- */
-
-    var renderingImage = new Image();
-    var imageURL = 'placeholder.jpg';
-    renderingImage.src = imageURL;
-
     var renderingTexture = GL.createTexture();
     GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
     GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
-
-    renderingImage.onload = function() {
-      GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
-      GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-      GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
-      GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, renderingImage);
-    };
 
     /* ----- RENDER TO TEXTURE ----- */
     /*
@@ -236,7 +206,6 @@ var main = function() {
     GL.texParameteri( GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE );
     GL.texParameteri( GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE );
     GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, SIMUSIZEPX, SIMUSIZEPX, 0, GL.RGBA, GL.FLOAT, null);
-
     GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, texture_water, 0);
 
     // COPY RTT
@@ -268,36 +237,26 @@ var main = function() {
     /* ----- INIT ----- */
 
     // WEBGL GENERAL INIT
-    GL.disable(GL.DEPTH_TEST);
-    GL.disable(GL.SCISSOR_TEST);
     GL.clearColor(0.0, 0.0, 0.0, 0.0);
 
-    // SHADER PROGRAM RENDERING INIT
-    GL.useProgram(renderShader);
-    GL.enableVertexAttribArray(SHP_VARS.rendering.position);
-    GL.uniform1i(SHP_VARS.rendering.sampler, 0);
-    GL.uniform1i(SHP_VARS.rendering.sampler_normals, 1);
-    GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
-    GL.vertexAttribPointer(SHP_VARS.rendering.position, 2, GL.FLOAT, false,8,0) ;
-    GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
-    // Disable before switching shaders
-    GL.disableVertexAttribArray(SHP_VARS.rendering.position);
+    GL.useProgram(shader3D);
+    GL.uniform1i(SHP_VARS.three.sampler, 0);
+    GL.uniform1i(SHP_VARS.three.sampler_normals, 1);
 
     //SHADER PROGRAM GPGPU WATER INIT
     GL.useProgram(waterShader);
     GL.uniform1i(SHP_VARS.water.sampler_water, 0);
     GL.uniform1i(SHP_VARS.water.sampler_normals, 1);
 
-    // SIMULATE A SQUARE WATER SURFACE SIDE MEASURING 2 METERS
-    GL.uniform1f(SHP_VARS.water.g, -9.8);               //gravity acceleration
-    GL.uniform1f(SHP_VARS.water.H, 0.01);               //mean height of water in meters
-    GL.uniform1f(SHP_VARS.water.b, 0.001);                //viscous drag coefficient
-    GL.uniform1f(SHP_VARS.water.epsilon, 1/SIMUSIZEPX); //used to compute space derivatives
-    GL.uniform1f(SHP_VARS.water.scale, SIMUWIDTH/SIMUSIZEPX);
+    // SIMULATE A SQUARE WATER SURFACE SIDE MEASURING (SIMUWIDTH) METERS
+    GL.uniform1f(SHP_VARS.water.g, -9.8);                       // gravity acceleration
+    GL.uniform1f(SHP_VARS.water.H, 0.01);                       // mean height of water in meters
+    GL.uniform1f(SHP_VARS.water.b, 0.001);                      // viscous drag coefficient
+    GL.uniform1f(SHP_VARS.water.epsilon, 1 / SIMUSIZEPX);       // used to compute space derivatives
+    GL.uniform1f(SHP_VARS.water.scale, SIMUWIDTH / SIMUSIZEPX);
     // Set the water source flow and radius
     GL.uniform1f(SHP_VARS.water.sourceFlow, 4);
-    GL.uniform1f(SHP_VARS.water.sourceRadius, 0.04); //percentage of the surface which is flowed by the source
-
+    GL.uniform1f(SHP_VARS.water.sourceRadius, 0.04);            // % of the surface flowed by the source
     // Send quad to vertex shader
     GL.enableVertexAttribArray(SHP_VARS.water.position);
     GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
@@ -330,7 +289,8 @@ var main = function() {
     /* ----- RENDER LOOP ----- */
     var old_timestamp = 0;
     var animate = function(timestamp) {
-      var dt = (timestamp - old_timestamp) / 1000; // time step in seconds;
+      // Time step in seconds
+      var dt = (timestamp - old_timestamp) / 1000;
       dt = Math.min(Math.abs(dt), 0.017);
       old_timestamp = timestamp;
 
@@ -338,7 +298,7 @@ var main = function() {
 
       for (var i=0; i<GPGPU_NPASS; i++) {
 
-        //COPY
+        // COPY
         GL.bindFramebuffer(GL.FRAMEBUFFER, frameBuffer_copy);
         GL.useProgram(copyShader);
         GL.viewport(0.0, 0.0, SIMUSIZEPX, SIMUSIZEPX);
@@ -347,7 +307,7 @@ var main = function() {
         GL.drawElements(GL.TRIANGLES, quad_faces.length, GL.UNSIGNED_SHORT, 0);
         GL.disableVertexAttribArray(SHP_VARS.copy.position);
 
-        // GPGPU PHYSICAL SIMULATION :
+        // GPGPU PHYSICAL SIMULATION:
         GL.bindFramebuffer(GL.FRAMEBUFFER, frameBuffer_water);
         GL.useProgram(waterShader);
         GL.enableVertexAttribArray(SHP_VARS.water.position);
@@ -391,43 +351,26 @@ var main = function() {
                        zNear,
                        zFar);
 
-      // Set up the modelview matrix (mvMatrix)
+      // MODELVIEW MATRIX SETUP
       const mvMatrix = mat4.create();
-      mat4.translate(mvMatrix,     // destination matrix
-                    mvMatrix,     // matrix to translate
-                    [-0.0, -0.5, -4.5]);  // amount to translate
-
-      mat4.rotate(mvMatrix,  // destination matrix
-                 mvMatrix,  // matrix to rotate
-                 -65 * Math.PI / 180,     // amount to rotate in radians
-                 [1, 0, 0]);       // axis to rotate around
+      // Translate it to center it
+      mat4.translate(mvMatrix, mvMatrix, [-0.485, -0.25, -1.5]);
+      // Rotate so that faces the user
+      mat4.rotate(mvMatrix, mvMatrix, -65 * Math.PI / 180, [1, 0, 0]);
 
       // Pass the projection and modelview matrices to the shaders
-      GL.uniformMatrix4fv(
-         SHP_VARS.three.prMatrix,
-         false,
-         prMatrix);
-      GL.uniformMatrix4fv(
-         SHP_VARS.three.mvMatrix,
-         false,
-         mvMatrix);
+      GL.uniformMatrix4fv(SHP_VARS.three.prMatrix, false, prMatrix);
+      GL.uniformMatrix4fv(SHP_VARS.three.mvMatrix, false, mvMatrix);
 
       // 3D SHADER PROGRAM RENDERING INIT
-      GL.enableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
-      //GL.bindBuffer(GL.ARRAY_BUFFER, QUAD_VERTEX);
-      GL.uniform1i(SHP_VARS.three.sampler, 0);
-      GL.uniform1i(SHP_VARS.three.sampler_normals, 1);
-      GL.vertexAttribPointer(SHP_VARS.three.aPos, 2, GL.FLOAT, false,8,0) ;
-      //GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, QUAD_FACES);
-
+      GL.enableVertexAttribArray(SHP_VARS.three.aPos);
       GL.viewport(0.0, 0.0, CANVAS.width, CANVAS.height);
       GL.activeTexture(GL.TEXTURE1);
       GL.bindTexture(GL.TEXTURE_2D, texture_normals);
-      GL.activeTexture(GL.TEXTURE0);
-      GL.bindTexture(GL.TEXTURE_2D, renderingTexture);
+      GL.vertexAttribPointer(SHP_VARS.three.aPos, 2, GL.FLOAT, false,8,0) ;
       GL.drawElements(GL.TRIANGLES, quad_faces.length, GL.UNSIGNED_SHORT, 0);
       // Disable rendering attributes for next loop
-      GL.disableVertexAttribArray(SHP_VARS.three.aPos); //SHP_VARS.rendering.position
+      GL.disableVertexAttribArray(SHP_VARS.three.aPos);
 
       GL.flush();
       window.requestAnimationFrame(animate);
@@ -445,11 +388,9 @@ function generateVertices(n){
       // Push the x coordinate
       var x = (j * step) - 1.0;
       quad.push(x);
-      //console.log("j * step (x): " + x);
       // Push the y coordinate
       var y = (i * step) - 1.0;
       quad.push(y);
-      //console.log("i * step (y): " + y);
     }
   }
 
@@ -459,23 +400,7 @@ function generateVertices(n){
 function generateFaces(n){
   // Given n, generates faces for an n x n quad
   var faces = [];
-  /*
-  generateFaces(2)
-  0,1,3,
-  0,3,2
-  generateFaces(3)
-  0,1,4,
-  0,4,3,
 
-  1,2,5,
-  1,5,4,
-
-  3,4,7,
-  3,7,6,
-
-  4,5,8,
-  4,8,7,
-  */
   // Create a lookup tool
   var vertices = [];
   for (var i = 0; i < n; i++){
@@ -501,6 +426,5 @@ function generateFaces(n){
       faces.push(vertices[row + 1][col]);
     }
   }
-  console.log(faces);
   return faces;
 }
