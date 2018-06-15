@@ -506,6 +506,10 @@ function updateColor(colVal) {
 			document.getElementById("drag").value = "1";
 			updateVisc(1);
 			document.getElementById("visc").value = "1";
+			updateRed(0);
+			document.getElementById("tint").value = "0";
+			updateSFR(4);
+			document.getElementById("sfr").value = "4";
 			break;
 		case 2:
 			colorRed = 0.0;
@@ -518,6 +522,10 @@ function updateColor(colVal) {
 			document.getElementById("drag").value = "1";
 			updateVisc(1);
 			document.getElementById("visc").value = "1";
+			updateRed(0);
+			document.getElementById("tint").value = "0";
+			updateSFR(4);
+			document.getElementById("sfr").value = "4";
 			break;
 		case 3:
 			colorRed = 0.55;
@@ -528,9 +536,12 @@ function updateColor(colVal) {
 			document.getElementById("grav").value = "30";
 			updateDrag(2);
 			document.getElementById("drag").value = "2";
-			$("#sliderAmountVisc").html(10);
+			updateVisc(1);
 			document.getElementById("visc").value = "10";
-			visc = 1;
+			updateRed(6);
+			document.getElementById("tint").value = "6";
+			updateSFR(4);
+			document.getElementById("sfr").value = "4";
 			break;
 	}
 	GL.useProgram(shader3D);
@@ -538,10 +549,6 @@ function updateColor(colVal) {
 	GL.uniform1f(locationOfGre, colorGre);
 	GL.uniform1f(locationOfBlu, colorBlu);
 	GL.uniform1f(locationOfNorm, norm);
-	GL.useProgram(waterShader);
-	//GL.uniform1f(SHP_VARS.water.g, grav);
-	GL.uniform1f(SHP_VARS.water.H, drag);
-	GL.uniform1f(SHP_VARS.water.b, visc);
 }
 
 function reset(){
