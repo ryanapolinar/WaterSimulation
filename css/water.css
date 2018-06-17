@@ -21,6 +21,13 @@ body {
   margin-top: 2em;
 }
 
+.unselectable {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 a {
   color:white;
   text-decoration: underline;
